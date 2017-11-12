@@ -4,16 +4,16 @@
 
 // COMANDOS DE APLICACION
 //Definimos comando HELO
-#define EH "HELO"
+#define HE "HELO"
 //Definimos los comandos para envío de mensaje
 //MAIL FROM
-#define MA "MAIL"
+#define MA "MAIL FROM: "
 //RCPT TO
-#define RCPT "RCPT"
+#define RCPT "RCPT TO: "
 //DATA
 #define DATA "DATA"
 //MENSAJES
-#define MENS "MENS"
+#define MENS "MENSAJE"
 
 
 #define SC "USER"  // SOLICITUD DE CONEXION USER usuario 
