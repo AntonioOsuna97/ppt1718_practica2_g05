@@ -14,7 +14,9 @@
 #define DATA "DATA"
 //MENSAJES
 #define MENS "MENSAJE"
-
+//SESION 4
+//RSET: Aborta la transacción en curso y reinicia la sesión
+#define RSET "RSET"
 
 #define SC "USER"  // SOLICITUD DE CONEXION USER usuario 
 #define PW "PASS"  // Password del usuario  PASS password
@@ -39,15 +41,16 @@
 #define S_RCPT 2
 #define S_DATA 3
 #define S_MENSAJE 4
-#define S_QUIT 5
-#define S_EXIT 6
+#define S_RSET 5
+#define S_QUIT 6
+#define S_EXIT 7
 
-#define S_RSET 7
+
 //No necesarios por ahora
 #define S_VRFY 8
 #define S_NOOP 9 //Responde codigo asentamiento positivo 250 ok
 #define S_HELP 10
-#define S_EXIT 11
+
 /*
 #define S_USER 1
 #define S_PASS 2
@@ -64,6 +67,7 @@
 //PUERTO DEL SERVICIO
 #define default_mailPort	25 //Cambiamos puerto a 25 
 
-// NOMBRE Y PASSWORD AUTORIZADOS
+/*No necesarios NOMBRE Y PASSWORD en esta practica
 #define USER		"alumno"
 #define PASSWORD	"123456"
+*/

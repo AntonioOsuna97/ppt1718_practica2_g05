@@ -11,6 +11,8 @@ Descripción:
 	Cliente sencillo TCP.
 
 Autor: Juan Carlos Cuevas Martínez
+	   Fernando Cabrera CAballero
+	   ANtonio OSuna Melgarejo
 
 *******************************************************/
 #include <stdio.h>
@@ -35,6 +37,8 @@ int main(int *argc, char *argv[])
 	char ipdest[256];
 	char default_ip4[16]="127.0.0.1";
 	char default_ip6[64]="::1";
+	//Definimos un caracter para el bucle
+	char caracter="";
 
 	WORD wVersionRequested;
 	WSADATA wsaData;
@@ -114,8 +118,8 @@ int main(int *argc, char *argv[])
 					switch (estado) {
 					case S_HELO:
 						// Se recibe el mensaje de bienvenida
-						printf("Bienvenido SEVICEMAIL\r\n");
-						sprintf_s(buffer_out, sizeof(buffer_out), "HELO %s %s",ipdest, CRLF); //250 correcto
+						printf("\nBienvenido a SEVICEMAIL-ANFE\r\n");
+						sprintf_s(buffer_out, sizeof(buffer_out), "HELO %s %s", ipdest, CRLF); //250 correcto
 						estado++;
 						break;
 
@@ -135,7 +139,7 @@ int main(int *argc, char *argv[])
 							estado++;
 						}
 						break;
-						
+
 						//Pasamos al estado RCPT TO
 					case S_RCPT:
 						printf("RCPT TO: ");
@@ -154,7 +158,7 @@ int main(int *argc, char *argv[])
 						}
 						break;
 
-						case S_DATA:
+					case S_DATA:
 						printf("CLIENTE> Introduzca datos (enter o QUIT para salir): ");
 						gets_s(input4, sizeof(input4));
 						if (strlen(input) == 0) {
@@ -168,31 +172,44 @@ int main(int *argc, char *argv[])
 						}
 						break;
 
-/*					case S_DATA:
-						printf("CLIENTE> Introduzca datos (enter o QUIT para salir): ");
-						gets_s(input, sizeof(input));
-						if (strlen(input) == 0) {
-							sprintf_s(buffer_out, sizeof(buffer_out), "%s%s", SD, CRLF);
-							estado = S_QUIT;
-						}
-						else
-							sprintf_s(buffer_out, sizeof(buffer_out), "%s %s%s", ECHO, input, CRLF);
+						/*					case S_DATA:
+												printf("CLIENTE> Introduzca datos (enter o QUIT para salir): ");
+												gets_s(input, sizeof(input));
+												if (strlen(input) == 0) {
+													sprintf_s(buffer_out, sizeof(buffer_out), "%s%s", SD, CRLF);
+													estado = S_QUIT;
+												}
+												else
+													sprintf_s(buffer_out, sizeof(buffer_out), "%s %s%s", ECHO, input, CRLF);
+												break;
+						*/
+					case S_MENSAJE:
+						printf("Asunto:");
+						gets(input3);
+						printf("Mensaje de correo: \r\n");
+						printf("Asunto: %s%s", input3, CRLF);
+						printf("Remitente: %s%s%s", MA, input, CRLF);
+						printf("Destinatario: %s%s%s", RCPT, input2, CRLF);
+						printf("Datos: %s%s", input4, CRLF);
+						enviados = send(sockfd, buffer_out, (int)strlen(buffer_out), 0);
+						printf("SERVIDOR> Datos enviados correctamente\r\n");
+
+						estado++;
 						break;
-*/
-						case S_MENSAJE:
-							printf("Asunto:");
-							gets(input3);
-							printf("Mensaje de correo: \r\n");
-							printf("Asunto: %s%s", input3, CRLF);
-							printf("Remitente: %s%s%s", MA,input, CRLF);
-							printf("Destinatario: %s%s%s", RCPT,input2, CRLF);
-							printf("Datos: %s%s", input4, CRLF);
-							enviados = send(sockfd, buffer_out, (int)strlen(buffer_out), 0);
-							printf("SERVIDOR> Datos enviados correctamente\r\n");
 
+					case S_RSET:
+						do {
+							printf("¿Desea escribir otro mensaje? (s/n)\r\n");
+							caracter = _getche();
+						} while (caracter!= 's' && caracter!= 'n' && caracter!= 'S' && caracter!='N');
+						if (caracter == 'S' || caracter == 's') {
+							estado = S_HELO;
+						}
+						else {
 							estado++;
-							break;
-
+						}
+						break;
+						
 					case S_QUIT:
 
 						break;
