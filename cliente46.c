@@ -11,8 +11,8 @@ Descripción:
 	Cliente sencillo TCP.
 
 Autor: Juan Carlos Cuevas Martínez
-	   Fernando Cabrera CAballero
-	   ANtonio OSuna Melgarejo
+	   Fernando Cabrera Caballero
+	   Antonio Osuna Melgarejo
 
 *******************************************************/
 #include <stdio.h>
@@ -20,6 +20,7 @@ Autor: Juan Carlos Cuevas Martínez
 #include <conio.h>
 #include "protocol.h"
 
+//Me permite ejecutar el archivo
 #pragma comment(lib, "Ws2_32.lib")
 
 int main(int *argc, char *argv[])
@@ -29,7 +30,8 @@ int main(int *argc, char *argv[])
 	struct sockaddr_in server_in4;
 	struct sockaddr_in6 server_in6;
 	int address_size = sizeof(server_in4);
-	char buffer_in[1024], buffer_out[1024],input[1024],input2[1024], input3[1024], input4[1024];
+	char buffer_in[1024], input[1024],input2[1024], input3[1024], input4[1024];
+	char buffer_out[1024];
 	int recibidos=0,enviados=0;
 	int estado=S_HELO;
 	char option;
@@ -79,7 +81,7 @@ int main(int *argc, char *argv[])
 			exit(-1);
 		}
 		else{
-			printf_s("CLIENTE> Socket CREADO");
+			printf_s("CLIENTE> Socket CREADO\n");
 			printf("CLIENTE> Introduzca la IP destino (pulsar enter para IP por defecto): ");
 			gets_s(ipdest,sizeof(ipdest));
 
@@ -126,6 +128,9 @@ int main(int *argc, char *argv[])
 						//Pasamos al estado MAILFROM
 					case S_MAIL:
 						printf("MAIL FROM:");
+						//Lee los caracteres de la entrada estándar y los almacena como una  
+						//cadena C en str hasta que se alcanza un carácter de nueva línea
+						//str es un Puntero a un bloque de memoria (array de Char )
 						gets_s(input, sizeof(input));
 						if (strlen(input) == 0) {
 							// Si la longitud de input es 0, pasamos al estado QUIT
@@ -133,7 +138,7 @@ int main(int *argc, char *argv[])
 							estado = S_QUIT;
 						}
 						else {
-							//Escribimos input y pasamos al siguiente estado
+							//Escribimos MAIL FROM: input y crlf y pasamos al siguiente estado
 							sprintf_s(buffer_out, sizeof(buffer_out), "%s %s%s", MA, input, CRLF);
 
 							estado++;
@@ -143,7 +148,7 @@ int main(int *argc, char *argv[])
 						//Pasamos al estado RCPT TO
 					case S_RCPT:
 						printf("RCPT TO: ");
-						gets_s(input2, sizeof(input));
+						gets_s(input2, sizeof(input2));
 
 						if (strlen(input2) == 0) {
 							// Si la longitud de input es 0, pasamos al estado QUIT
@@ -151,7 +156,7 @@ int main(int *argc, char *argv[])
 							estado = S_QUIT;
 						}
 						else {
-							//Escribimos input y pasamos al siguiente estado
+							//Escribimos RCPT TO: input y crlf y pasamos al siguiente estado
 							sprintf_s(buffer_out, sizeof(buffer_out), "%s%s%s", RCPT, input2, CRLF);
 
 							estado++;
@@ -161,7 +166,7 @@ int main(int *argc, char *argv[])
 					case S_DATA:
 						printf("CLIENTE> Introduzca datos (enter o QUIT para salir): ");
 						gets_s(input4, sizeof(input4));
-						if (strlen(input) == 0) {
+						if (strlen(input4) == 0) {
 							sprintf_s(buffer_out, sizeof(buffer_out), "%s%s", SD, CRLF);
 							estado = S_QUIT;
 						}
@@ -172,21 +177,10 @@ int main(int *argc, char *argv[])
 						}
 						break;
 
-						/*					case S_DATA:
-												printf("CLIENTE> Introduzca datos (enter o QUIT para salir): ");
-												gets_s(input, sizeof(input));
-												if (strlen(input) == 0) {
-													sprintf_s(buffer_out, sizeof(buffer_out), "%s%s", SD, CRLF);
-													estado = S_QUIT;
-												}
-												else
-													sprintf_s(buffer_out, sizeof(buffer_out), "%s %s%s", ECHO, input, CRLF);
-												break;
-						*/
 					case S_MENSAJE:
 						printf("Asunto:");
 						gets(input3);
-						printf("Mensaje de correo: \r\n");
+						printf("\nMensaje de correo: \r\n");
 						printf("Asunto: %s%s", input3, CRLF);
 						printf("Remitente: %s%s%s", MA, input, CRLF);
 						printf("Destinatario: %s%s%s", RCPT, input2, CRLF);
@@ -200,7 +194,7 @@ int main(int *argc, char *argv[])
 					case S_RSET:
 						do {
 							printf("¿Desea escribir otro mensaje? (s/n)\r\n");
-							caracter = _getche();
+							caracter = _getche(); //Lee caracter
 						} while (caracter!= 's' && caracter!= 'n' && caracter!= 'S' && caracter!='N');
 						if (caracter == 'S' || caracter == 's') {
 							estado = S_HELO;
@@ -210,6 +204,7 @@ int main(int *argc, char *argv[])
 						}
 						break;
 						
+						//No necesario introducir codigo. do{}while
 					case S_QUIT:
 
 						break;
@@ -235,13 +230,45 @@ int main(int *argc, char *argv[])
 							printf("CLIENTE> Conexión con el servidor cerrada\r\n");
 							estado=S_QUIT;
 						}
-					}else{
-						buffer_in[recibidos]=0x00;
-						//Escribe recipient***  HACER ALGO AQUI
+					}
+					else {
+						buffer_in[recibidos] = 0x00;
+						//Nos permite escribir un mensaje de envio correcto y recepcion correcta
+						//Ponemos los estados S_RCPT y S_DATA debido a que queremos que escriba el mensaje 
+						//en el estado mail y rcpt --> en mail estado++(RCPT) y rcpt estado++(DATA)
+						if (estado == S_RCPT || estado == S_DATA) {
+							//Escribe un mensaje de envio correcto y recepción correcta
+							printf(buffer_in);
+							//Definimos en protocol.h una respuesta a un comando de aplicacion
+							//Será UU y significa: "554 User unknown"
+							//Si el buffer_in es usuario erroneo
+							if (strncmp(buffer_in, UU, 2) == 0) {
+								//Definimos variable para introducir enteros
+								int estado2=0;
+								do {
+									printf("Introduce 1 --> Introducir los dos usuarios de nuevo\n2--> Para introducir un usuario correcto\n");
+									//scanf_s necesita el tipo de dato %i y direccion &.
+									scanf_s("%i", &estado2);
+									switch (estado2) {									
+									case 1:
+										estado = S_MAIL;
+										//Nos permite poder escribir de nuevo en el case S_MAIL
+										gets_s(input, sizeof(input));
+										gets_s(input2, sizeof(input2));
+										break;
 
-						//printf(buffer_in);
-						if(estado!=S_DATA && strncmp(buffer_in,OK,2)==0) 
-							estado++;  
+									case 2:
+										estado = S_RCPT;
+
+										gets_s(input2, sizeof(input2));
+										break;
+									default:
+										printf("Opcion no disponible\n");
+										break;
+									}
+								} while (estado2 != 1 && estado2 != 2);
+							}
+						}
 					}
 
 				}while(estado!=S_QUIT);		

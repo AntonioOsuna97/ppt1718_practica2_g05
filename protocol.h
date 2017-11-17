@@ -18,10 +18,7 @@
 //RSET: Aborta la transacción en curso y reinicia la sesión
 #define RSET "RSET"
 
-#define SC "USER"  // SOLICITUD DE CONEXION USER usuario 
-#define PW "PASS"  // Password del usuario  PASS password
 #define SD2 "EXIT"  // Finalizacion de la conexion de aplicacion 
-#define ECHO "ECHO" // Definicion del comando "ECHO" para el servicio de eco
 //Definición del comando QUIT
 #define SD  "QUIT"  // Finalizacion de la conexion de aplicacion
 
@@ -29,6 +26,7 @@
 #define OK  "OK"
 #define ER  "ER"
 #define OKDATA  "OD"
+#define UU  "554 User unknown"
 
 
 //FIN DE RESPUESTA
@@ -46,26 +44,12 @@
 #define S_EXIT 7
 
 
-//No necesarios por ahora
-#define S_VRFY 8
-#define S_NOOP 9 //Responde codigo asentamiento positivo 250 ok
-#define S_HELP 10
-
-/*
-#define S_USER 1
-#define S_PASS 2
-#define S_DATA 3
-#define S_QUIT 4
-#define S_EXIT 5
-*/
-
-
 /*
 //PUERTO DEL SERVICIO
 #define TCP_SERVICE_PORT	6000
 */
-//PUERTO DEL SERVICIO
-#define default_mailPort	25 //Cambiamos puerto a 25 
+//Introducimos el puerto por defecto de SMTP
+#define default_mailPort	25  
 
 /*No necesarios NOMBRE Y PASSWORD en esta practica
 #define USER		"alumno"
