@@ -1,5 +1,7 @@
 #ifndef protocolostpte_practicas_headerfile
 #define protocolostpte_practicas_headerfile
+//Necesario para dominio
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #endif
 
 // COMANDOS DE APLICACION

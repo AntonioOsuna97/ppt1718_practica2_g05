@@ -22,6 +22,10 @@ Autor: Juan Carlos Cuevas Martínez
 
 //Me permite ejecutar el archivo
 #pragma comment(lib, "Ws2_32.lib")
+#pragma warning(disable : 4996)
+
+//Necesario para dominio
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 int main(int *argc, char *argv[])
 {
@@ -82,8 +86,22 @@ int main(int *argc, char *argv[])
 		}
 		else{
 			printf_s("CLIENTE> Socket CREADO\n");
-			printf("CLIENTE> Introduzca la IP destino (pulsar enter para IP por defecto): ");
+			printf("CLIENTE> Introduzca la IP destino (pulsar enter para IP por defecto) o el dominio destino: ");
 			gets_s(ipdest,sizeof(ipdest));
+
+			//Cambios
+			char ipdestl[256];
+			struct in_addr address;
+			ipdestl[256] = inet_addr(ipdest); 
+			if (ipdestl == INADDR_NONE) {
+				//La direccion introducida por teclado no es correcta o corresponde con un dominio
+				struct  hostent *host;
+				host = gethostbyname(ipdest); //Pruebo si es dominio
+				if (host != NULL) { //Si me devuelve distinto de null es dominio
+					memcpy(&address, host->h_addr_list[0], 4); // Tomo los 4 primeros bytes
+					printf("\nDireccion %s",inet_ntoa(address));
+				}
+			}
 
 			//Dirección por defecto según la familia
 			if(strcmp(ipdest,"")==0 && ipversion==AF_INET)
@@ -121,6 +139,10 @@ int main(int *argc, char *argv[])
 					case S_HELO:
 						// Se recibe el mensaje de bienvenida
 						printf("\nBienvenido a SEVICEMAIL-ANFE\r\n");
+						
+						//Introducción de dominio
+
+
 						sprintf_s(buffer_out, sizeof(buffer_out), "HELO %s %s", ipdest, CRLF); //250 correcto
 						estado++;
 						break;
