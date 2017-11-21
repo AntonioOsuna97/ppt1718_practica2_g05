@@ -216,8 +216,9 @@ int main(int *argc, char *argv[])
 						}
 						else {
 							//Escribimos input y pasamos al siguiente estado
-							printf("DATA: %s%s", input4, CRLF);
+							sprintf_s(buffer_out, sizeof(buffer_out), "%s%s", DATA, CRLF);
 							estado++;
+
 						}
 						break;
 
@@ -231,8 +232,12 @@ int main(int *argc, char *argv[])
 						printf("Remitente: %s%s%s", MA, input, CRLF);
 						printf("Destinatario: %s%s%s", RCPT, input2, CRLF);
 						printf("Datos: %s%s", input4, CRLF);
+						//sprintf_s(buffer_out, sizeof(buffer_out), "Date:%s%s From:%s%s To:%s%s Subject:%s%s",salida_tiempo,CRLF,input,CRLF, input2, CRLF, input3, CRLF);
+						sprintf_s(buffer_out, sizeof(buffer_out), "%s%s", input4, CRLF);
+						
+
 						//Enviamos mensaje
-						enviados = send(sockfd, buffer_out, (int)strlen(buffer_out), 0);
+						//enviados = send(sockfd, buffer_out, (int)strlen(buffer_out), 0);
 						printf("SERVIDOR> Datos enviados correctamente\r\n");
 						estado++;
 						break;
@@ -257,7 +262,7 @@ int main(int *argc, char *argv[])
 						break;
 					}
 
-				
+
 					if(estado!=S_HELO){
 						enviados=send(sockfd,buffer_out,(int)strlen(buffer_out),0);
 						if(enviados==SOCKET_ERROR){
@@ -283,7 +288,7 @@ int main(int *argc, char *argv[])
 						//Nos permite escribir un mensaje de envio correcto y recepcion correcta
 						//Ponemos los estados S_RCPT y S_DATA debido a que queremos que escriba el mensaje 
 						//en el estado mail , rcpt y helo --> en helo estado++ (mail),en mail estado++(RCPT) y rcpt estado++(DATA)
-						if (estado == S_MAIL || estado == S_RCPT || estado == S_DATA) {
+						if (estado == S_MAIL || estado == S_RCPT || estado == S_DATA || estado == S_MENSAJE) {
 							//Escribe un mensaje de envio correcto y recepción correcta
 							printf(buffer_in);
 							//Definimos en protocol.h una respuesta a un comando de aplicacion
