@@ -30,17 +30,20 @@ Autor: Juan Carlos Cuevas Martínez
 int main(int *argc, char *argv[])
 {
 	SOCKET sockfd; //Crea el socket
+	struct  hostent *host; //Estructura host (SESION 5)
+	struct in_addr address; //SESION 5
 	struct sockaddr *server_in;
 	struct sockaddr_in server_in4;
 	struct sockaddr_in6 server_in6;
 	int address_size = sizeof(server_in4);
 	char buffer_in[1024], input[1024],input2[1024], input3[1024], input4[1024];
-	char buffer_out[1024];
+	char buffer_out[6144]; //Suma de tamaños input, input2...
 	int recibidos=0,enviados=0;
 	int estado=S_HELO;
 	char option;
 	int ipversion=AF_INET;//IPv4 por defecto
 	char ipdest[256];
+	char ipdestl="";
 	char default_ip4[16]="127.0.0.1";
 	char default_ip6[64]="::1";
 	//Definimos un caracter para el bucle
@@ -86,22 +89,29 @@ int main(int *argc, char *argv[])
 		}
 		else{
 			printf_s("CLIENTE> Socket CREADO\n");
-			printf("CLIENTE> Introduzca la IP destino (pulsar enter para IP por defecto) o el dominio destino: ");
+			printf("CLIENTE> Introduzca la IP destino (pulsar enter para IP por defecto) o dominio: ");
 			gets_s(ipdest,sizeof(ipdest));
-
-			//Cambios
-			char ipdestl[256];
-			struct in_addr address;
-			ipdestl[256] = inet_addr(ipdest); 
+			//SESION 5
+			//Codigo profesor(No introducir dominio de argosoft)
+			ipdestl = inet_addr(ipdest);
 			if (ipdestl == INADDR_NONE) {
-				//La direccion introducida por teclado no es correcta o corresponde con un dominio
-				struct  hostent *host;
-				host = gethostbyname(ipdest); //Pruebo si es dominio
-				if (host != NULL) { //Si me devuelve distinto de null es dominio
-					memcpy(&address, host->h_addr_list[0], 4); // Tomo los 4 primeros bytes
-					printf("\nDireccion %s",inet_ntoa(address));
-				}
+				//La dirección introducida por teclado no es correcta o
+				//corresponde con un dominio.
+				struct hostent *host;
+				host = gethostbyname(ipdest);
+				if (host != NULL) {
+					memcpy(&address, host->h_addr_list[0], 4);
+					printf("\nDireccion %s\n", inet_ntoa(address));
+					//ipdest[256] = inet_ntoa(address);
+				}			
+				strcpy_s(ipdest,sizeof(ipdest),inet_ntoa(address));
+			}
+			
+			/*MAL
+			if (strcmp(ipdest,"lib.simulacion") == 0) {
+				strcpy_s(ipdest, sizeof(ipdest), default_ip4);
 			}
+			*/
 
 			//Dirección por defecto según la familia
 			if(strcmp(ipdest,"")==0 && ipversion==AF_INET)
@@ -139,11 +149,7 @@ int main(int *argc, char *argv[])
 					case S_HELO:
 						// Se recibe el mensaje de bienvenida
 						printf("\nBienvenido a SEVICEMAIL-ANFE\r\n");
-						
-						//Introducción de dominio
-
-
-						sprintf_s(buffer_out, sizeof(buffer_out), "HELO %s %s", ipdest, CRLF); //250 correcto
+						sprintf_s(buffer_out, sizeof(buffer_out), "%s %s %s",HE, ipdest, CRLF); //250 correcto
 						estado++;
 						break;
 
@@ -209,7 +215,6 @@ int main(int *argc, char *argv[])
 						printf("Datos: %s%s", input4, CRLF);
 						enviados = send(sockfd, buffer_out, (int)strlen(buffer_out), 0);
 						printf("SERVIDOR> Datos enviados correctamente\r\n");
-
 						estado++;
 						break;
 
@@ -276,7 +281,6 @@ int main(int *argc, char *argv[])
 										estado = S_MAIL;
 										//Nos permite poder escribir de nuevo en el case S_MAIL
 										gets_s(input, sizeof(input));
-										gets_s(input2, sizeof(input2));
 										break;
 
 									case 2:
