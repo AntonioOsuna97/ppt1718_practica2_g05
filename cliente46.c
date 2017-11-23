@@ -40,7 +40,7 @@ int main(int *argc, char *argv[])
 	struct sockaddr_in server_in4;
 	struct sockaddr_in6 server_in6;
 	int address_size = sizeof(server_in4);
-	char buffer_in[1024], input[1024],input2[1024], input3[1024], input4[1024];
+	char buffer_in[1024], input[1024],input2[1024], input3[1024], input4[1024],input5[1024];
 	char buffer_out[6144]; //Buffer de salida le pondremos un tamaño grande.
 	int recibidos=0,enviados=0;
 	int estado=S_HELO;
@@ -53,6 +53,7 @@ int main(int *argc, char *argv[])
 	char default_ip6[64]="::1";
 	//Definimos un caracter para el bucle
 	char caracter="";
+	char punto = "";
 
 	//Variables para la fecha
 	time_t tiempo = time(0);
@@ -81,7 +82,7 @@ int main(int *argc, char *argv[])
 	
 	do{
 
-		printf("CLIENTE> ¿Qué versión de IP desea usar? 6 para IPv6, 4 para IPv4 [por defecto] ");
+		printf("CLIENTE> ¿Que version de IP desea usar? 6 para IPv6, 4 para IPv4 [por defecto] ");
 		gets_s(ipdest, sizeof(ipdest));
 		//Si la opcion es 6, la familia sera ipv6
 		if (strcmp(ipdest, "6") == 0) {
@@ -113,8 +114,8 @@ int main(int *argc, char *argv[])
 				host = gethostbyname(ipdest); //Pruebo si es dominio
 				if (host != NULL) { //Si es distinto de null, es dominio
 					memcpy(&address, host->h_addr_list[0], 4);  //Tomo los 4 primeros bytes.
-					printf("\nDireccion %s\n", inet_ntoa(address));
-				}			
+					printf("Direccion %s\n", inet_ntoa(address));
+				}		
 				//Copia en ipdest
 				strcpy_s(ipdest,sizeof(ipdest),inet_ntoa(address));
 			}
@@ -170,7 +171,7 @@ int main(int *argc, char *argv[])
 
 						//Pasamos al estado MAILFROM
 					case S_MAIL:
-						printf("MAIL FROM: (enter para salir):");
+						printf("MAIL FROM (enter para salir): ");
 						//Lee los caracteres de la entrada estándar y los almacena como una  
 						//cadena hasta que se alcanza un carácter de nueva línea
 						gets_s(input, sizeof(input));
@@ -189,7 +190,7 @@ int main(int *argc, char *argv[])
 
 						//Pasamos al estado RCPT TO
 					case S_RCPT:
-						printf("RCPT TO: (enter para salir)");
+						printf("RCPT TO (enter para salir): ");
 						gets_s(input2, sizeof(input2));
 
 						if (strlen(input2) == 0) {
@@ -206,6 +207,7 @@ int main(int *argc, char *argv[])
 						break;
 
 					case S_DATA:
+						/*
 						printf("CLIENTE> Introduzca datos (enter para salir): ");
 						//Introducimos datos
 						gets_s(input4, sizeof(input4));
@@ -214,15 +216,20 @@ int main(int *argc, char *argv[])
 							sprintf_s(buffer_out, sizeof(buffer_out), "%s%s", SD, CRLF);
 							estado = S_QUIT;
 						}
-						else {
+						else { */
 							//Escribimos input y pasamos al siguiente estado
 							sprintf_s(buffer_out, sizeof(buffer_out), "%s%s", DATA, CRLF);
 							estado++;
-
-						}
 						break;
 
 					case S_MENSAJE:
+						printf("Escribe mensaje(enter para finalizar): ");
+						gets(input5,sizeof(input5));
+						do {
+							printf("Introduce un punto: ");
+							gets(input4, sizeof(input4));
+						} while (strcmp(input4,".")!= 0);
+						
 						//Escribimos asunto
 						printf("Asunto:");
 						gets(input3);
@@ -231,15 +238,15 @@ int main(int *argc, char *argv[])
 						printf("Asunto: %s%s", input3, CRLF);
 						printf("Remitente: %s%s%s", MA, input, CRLF);
 						printf("Destinatario: %s%s%s", RCPT, input2, CRLF);
-						printf("Datos: %s%s", input4, CRLF);
-						//sprintf_s(buffer_out, sizeof(buffer_out), "Date:%s%s From:%s%s To:%s%s Subject:%s%s",salida_tiempo,CRLF,input,CRLF, input2, CRLF, input3, CRLF);
-						sprintf_s(buffer_out, sizeof(buffer_out), "%s%s", input4, CRLF);
+						printf("Datos: %s%s", input5, CRLF);
+						sprintf_s(buffer_out, sizeof(buffer_out), "Date:%s%s From:%s%s To:%s%s Subject:%s%s DATA: %s%s%s%s",salida_tiempo,CRLF,input,CRLF, input2, CRLF, input3, CRLF, input5, CRLF, input4, CRLF);
 						
+						estado++;
 
 						//Enviamos mensaje
 						//enviados = send(sockfd, buffer_out, (int)strlen(buffer_out), 0);
 						printf("SERVIDOR> Datos enviados correctamente\r\n");
-						estado++;
+						
 						break;
 
 					case S_RSET:
@@ -249,10 +256,13 @@ int main(int *argc, char *argv[])
 						} while (caracter!= 's' && caracter!= 'n' && caracter!= 'S' && caracter!='N');
 						//Si es S o s pasamos al estado S_HELO y escribimos otro mensaje
 						if (caracter == 'S' || caracter == 's') {
+							sprintf_s(buffer_out,sizeof(buffer_out),"%s%s", RSET,CRLF);
+							enviados = send(sockfd, buffer_out, (int)strlen(buffer_out), 0);
 							estado = S_HELO;
 						}
 						else {
 							//Si no, pasamos al estado S_QUIT y nos salimos
+							sprintf_s(buffer_out, sizeof(buffer_out), "%s%s", SD, CRLF);
 							estado++;
 						}
 						break;
@@ -262,7 +272,7 @@ int main(int *argc, char *argv[])
 						break;
 					}
 
-
+					
 					if(estado!=S_HELO){
 						enviados=send(sockfd,buffer_out,(int)strlen(buffer_out),0);
 						if(enviados==SOCKET_ERROR){
@@ -270,7 +280,9 @@ int main(int *argc, char *argv[])
 							 continue;
 						}
 					}
-						
+
+
+					
 					recibidos=recv(sockfd,buffer_in,512,0);
 					if(recibidos<=0){
 						DWORD error=GetLastError();
@@ -285,10 +297,6 @@ int main(int *argc, char *argv[])
 					}
 					else {
 						buffer_in[recibidos] = 0x00;
-						//Nos permite escribir un mensaje de envio correcto y recepcion correcta
-						//Ponemos los estados S_RCPT y S_DATA debido a que queremos que escriba el mensaje 
-						//en el estado mail , rcpt y helo --> en helo estado++ (mail),en mail estado++(RCPT) y rcpt estado++(DATA)
-						if (estado == S_MAIL || estado == S_RCPT || estado == S_DATA || estado == S_MENSAJE) {
 							//Escribe un mensaje de envio correcto y recepción correcta
 							printf(buffer_in);
 							//Definimos en protocol.h una respuesta a un comando de aplicacion
@@ -320,8 +328,6 @@ int main(int *argc, char *argv[])
 								} while (estado2 != 1 && estado2 != 2);
 							}
 						}
-					}
-
 				}while(estado!=S_QUIT);		
 			}
 			else{
