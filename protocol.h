@@ -52,8 +52,3 @@
 */
 //Introducimos el puerto por defecto de SMTP
 #define default_mailPort	25  
-
-/*No necesarios NOMBRE Y PASSWORD en esta practica
-#define USER		"alumno"
-#define PASSWORD	"123456"
-*/
