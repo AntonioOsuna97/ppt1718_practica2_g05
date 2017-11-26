@@ -1,16 +1,16 @@
 /*******************************************************
 Protocolos de Transporte
-Grado en IngenierÃ­a TelemÃ¡tica
-Dpto. IngenÃ­erÃ­a de TelecomunicaciÃ³n
-Univerisdad de JaÃ©n
+Grado en Ingeniería Telemática
+Dpto. Ingeníería de Telecomunicación
+Univerisdad de Jaén
 
 Fichero: cliente.c
-VersiÃ³n: 2.0
+Versión: 2.0
 Fecha: 09/2017
-DescripciÃ³n:
+Descripción:
 	Cliente sencillo TCP.
 
-Autor: Juan Carlos Cuevas MartÃ­nez
+Autor: Juan Carlos Cuevas Martínez
 	   Fernando Cabrera Caballero
 	   Antonio Osuna Melgarejo
 
@@ -22,6 +22,8 @@ Autor: Juan Carlos Cuevas MartÃ­nez
 //Libreria para tiempo
 #include <time.h>
 
+#include <string.h>
+
 //Me permite ejecutar el archivo
 #pragma comment(lib, "Ws2_32.lib")
 #pragma warning(disable : 4996)
@@ -31,7 +33,7 @@ Autor: Juan Carlos Cuevas MartÃ­nez
 
 int main(int *argc, char *argv[])
 {
-	//DefiniciÃ³n de variables
+	//Definición de variables
 	SOCKET sockfd; //Crea el socket
 	//Estructura host (SESION 5)
 	struct  hostent *host; 
@@ -40,8 +42,9 @@ int main(int *argc, char *argv[])
 	struct sockaddr_in server_in4;
 	struct sockaddr_in6 server_in6;
 	int address_size = sizeof(server_in4);
-	char buffer_in[1024], input[1024],input2[1024], input3[1024], input4[1024],input5[1024];
-	char buffer_out[6144]; //Buffer de salida le pondremos un tamaÃ±o grande.
+	char buffer_in[1024], input[1024],input2[1024], input3[1024], input4[1024],input5[4000];
+	char input6[1024];
+	char buffer_out[9000]; //Buffer de salida le pondremos un tamaño grande.
 	int recibidos=0,enviados=0;
 	int estado=S_HELO;
 	char option;
@@ -65,7 +68,7 @@ int main(int *argc, char *argv[])
 	WSADATA wsaData;
 	int err;
    
-	//InicializaciÃ³n Windows sockets - SOLO WINDOWS
+	//Inicialización Windows sockets - SOLO WINDOWS
 	wVersionRequested=MAKEWORD(1,1);
 	err=WSAStartup(wVersionRequested,&wsaData);
 	if(err!=0)
@@ -75,21 +78,21 @@ int main(int *argc, char *argv[])
 		WSACleanup();
 		return(0);
 	}
-	//Fin: InicializaciÃ³n Windows sockets
+	//Fin: Inicialización Windows sockets
 	
 	printf("**************\r\nCLIENTE TCP SENCILLO SOBRE IPv4 o IPv6\r\n*************\r\n");
 	
 	
 	do{
 
-		printf("CLIENTE> Â¿Que version de IP desea usar? 6 para IPv6, 4 para IPv4 [por defecto] ");
+		printf("CLIENTE> ¿Que version de IP desea usar? 6 para IPv6, 4 para IPv4 [por defecto] ");
 		gets_s(ipdest, sizeof(ipdest));
 		//Si la opcion es 6, la familia sera ipv6
 		if (strcmp(ipdest, "6") == 0) {
 			ipversion = AF_INET6;
 			printf_s("Familia IPV6\r\n");
 		}
-		else { //Distinto de 6 se elige la versiÃ³n 4
+		else { //Distinto de 6 se elige la versión 4
 			ipversion = AF_INET;
 			printf_s("Familia IPV4\r\n");
 		}
@@ -108,7 +111,7 @@ int main(int *argc, char *argv[])
 			//Codigo profesor diapositivas(No introducir dominio de argosoft)
 			ipdestl = inet_addr(ipdest);
 			if (ipdestl == INADDR_NONE) {
-				//La direcciÃ³n introducida por teclado no es correcta o
+				//La dirección introducida por teclado no es correcta o
 				//corresponde con un dominio.
 				struct hostent *host;
 				host = gethostbyname(ipdest); //Pruebo si es dominio
@@ -118,14 +121,15 @@ int main(int *argc, char *argv[])
 				}		
 				//Copia en ipdest
 				strcpy_s(ipdest,sizeof(ipdest),inet_ntoa(address));
-			}			
+			}
+			
 			/*MAL
 			if (strcmp(ipdest,"lib.simulacion") == 0) {
 				strcpy_s(ipdest, sizeof(ipdest), default_ip4);
 			}
 			*/
 
-			//DirecciÃ³n por defecto segÃºn la familia
+			//Dirección por defecto según la familia
 			//Si es familia AF_INET --> Ipv4
 			if(strcmp(ipdest,"")==0 && ipversion==AF_INET)
 				strcpy_s(ipdest,sizeof(ipdest),default_ip4);
@@ -154,11 +158,11 @@ int main(int *argc, char *argv[])
 			
 			estado=S_HELO;
 
-			//Comprobamos si se establece conexiÃ³n
+			//Comprobamos si se establece conexión
 			if(connect(sockfd, server_in, address_size)==0){
 				printf("CLIENTE> CONEXION ESTABLECIDA CON %s:%d\r\n",ipdest, default_mailPort);
 				recibidos = recv(sockfd, buffer_in, 512, 0); //recibimos la informacion del servidor para saber que esta listo
-				//Inicio de la mÃ¡quina de estados
+				//Inicio de la máquina de estados
 				do {
 					switch (estado) {
 					case S_HELO:
@@ -173,8 +177,8 @@ int main(int *argc, char *argv[])
 						//Pasamos al estado MAILFROM
 					case S_MAIL:
 						printf("MAIL FROM (enter para salir): ");
-						//Lee los caracteres de la entrada estÃ¡ndar y los almacena como una  
-						//cadena hasta que se alcanza un carÃ¡cter de nueva lÃ­nea
+						//Lee los caracteres de la entrada estándar y los almacena como una  
+						//cadena hasta que se alcanza un carácter de nueva línea
 						gets_s(input, sizeof(input));
 						if (strlen(input) == 0) {
 							// Si la longitud de input es 0, 
@@ -192,8 +196,8 @@ int main(int *argc, char *argv[])
 						//Pasamos al estado RCPT TO
 					case S_RCPT:
 						printf("RCPT TO (enter para salir): ");
-						//Lee los caracteres de la entrada estÃ¡ndar y los almacena como una  
-						//cadena hasta que se alcanza un carÃ¡cter de nueva lÃ­nea
+						//Lee los caracteres de la entrada estándar y los almacena como una  
+						//cadena hasta que se alcanza un carácter de nueva línea
 						gets_s(input2, sizeof(input2));
 
 						if (strlen(input2) == 0) {
@@ -215,7 +219,7 @@ int main(int *argc, char *argv[])
 						printf("CLIENTE> Introduzca datos (enter para salir): ");
 						//Introducimos datos
 						gets_s(input4, sizeof(input4));
-						//Si el tamaÃ±o de input4 es 0, nos salimos
+						//Si el tamaño de input4 es 0, nos salimos
 						if (strlen(input4) == 0) {
 							sprintf_s(buffer_out, sizeof(buffer_out), "%s%s", SD, CRLF);
 							estado = S_QUIT;
@@ -227,16 +231,16 @@ int main(int *argc, char *argv[])
 							estado++;
 						break;
 
+						//Mensaje
 					case S_MENSAJE:
 						printf("Escribe mensaje(enter para finalizar): ");
-						//Lee los caracteres de la entrada estÃ¡ndar y los almacena como una  
-						//cadena hasta que se alcanza un carÃ¡cter de nueva lÃ­nea
+						//Lee los caracteres de la entrada estándar y los almacena como una  
+						//cadena hasta que se alcanza un carácter de nueva línea
 						gets(input5,sizeof(input5));
 						do {
-							printf("Introduce un punto: ");
-							gets(input4, sizeof(input4));
-						} while (strcmp(input4,".")!= 0);
-						
+							gets(input4,sizeof(input4));
+						} while (strcmp(input4, ".")!=0);
+							
 						//Escribimos asunto
 						printf("Asunto:");
 						gets(input3);
@@ -257,7 +261,7 @@ int main(int *argc, char *argv[])
 
 					case S_RSET:
 						do {
-							printf("Â¿Desea escribir otro mensaje? (s/n)\r\n");
+							printf("¿Desea escribir otro mensaje? (s/n)\r\n");
 							caracter = _getche(); //Lee caracter
 						} while (caracter!= 's' && caracter!= 'n' && caracter!= 'S' && caracter!='N');
 						//Si es S o s pasamos al estado S_HELO y escribimos otro mensaje
@@ -295,11 +299,11 @@ int main(int *argc, char *argv[])
 					if(recibidos<=0){
 						DWORD error=GetLastError();
 						if(recibidos<0){
-							printf("CLIENTE> Error %d en la recepciÃ³n de datos\r\n",error);
+							printf("CLIENTE> Error %d en la recepción de datos\r\n",error);
 							estado=S_QUIT;
 						}
 						else{
-							printf("CLIENTE> ConexiÃ³n con el servidor cerrada\r\n");
+							printf("CLIENTE> Conexión con el servidor cerrada\r\n");
 							estado=S_QUIT;
 						}
 					}
@@ -308,7 +312,7 @@ int main(int *argc, char *argv[])
 							//Escribe un mensaje proporcionado por el servidor
 							printf(buffer_in);
 							//Definimos en protocol.h una respuesta a un comando de aplicacion
-							//SerÃ¡ UU y significa: "554 User unknown"
+							//Será UU y significa: "554 User unknown"
 							//Si el buffer_in (respuesta servidor) es usuario erroneo
 							if (strncmp(buffer_in, UU, 2) == 0) {
 								//Definimos variable para introducir enteros
