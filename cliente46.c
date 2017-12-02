@@ -42,7 +42,7 @@ int main(int *argc, char *argv[])
 	struct sockaddr_in server_in4;
 	struct sockaddr_in6 server_in6;
 	int address_size = sizeof(server_in4);
-	char buffer_in[1024], input[1024],input2[1024], input3[1024], input4[1024],input5[4000], inputprueba[128];
+	char buffer_in[1024], input[1024],input2[1024], input3[1024], input4[1024],input5[4000], inputDat[1024]= "", inputprueba[128];
 	char input6[1024];
 	char buffer_out[9000]; //Buffer de salida le pondremos un tamaño grande.
 	int recibidos=0,enviados=0;
@@ -208,6 +208,7 @@ int main(int *argc, char *argv[])
 							estado = S_QUIT;
 						}
 						else {
+							
 							//Escribe en el servidor RCPT TO: input y crlf y pasamos al siguiente estado
 							sprintf_s(buffer_out, sizeof(buffer_out), "%s%s%s", RCPT, input2, CRLF);
 
@@ -240,6 +241,11 @@ int main(int *argc, char *argv[])
 						gets(input5,sizeof(input5));
 						do {
 							gets(input4,sizeof(input4));
+							//Concatenamos la cadena 5 con un \n debido al enter
+							strcat(input5, "\n");
+							//Concatenamos la cadena 5 con la cadena anteriormente introducida
+
+							strcat(input5, input4);
 						} while (strcmp(input4, ".")!=0);
 							
 						//Escribimos asunto
@@ -250,10 +256,10 @@ int main(int *argc, char *argv[])
 						printf("Fecha y hora: %s \r\n",salida_tiempo); //Nos da la hora en la que se ha enviado
 						printf("Asunto: %s%s", input3, CRLF);
 						printf("Remitente: %s%s%s", MA, input, CRLF);
-						printf("Destinatario: %s%s%s", RCPT, input2, CRLF);
+						printf("Destinatario: %s%s%s", RCPT, inputDat, CRLF);
 						printf("Datos: %s%s", input5, CRLF);
 						//Escribe en el servidor
-						sprintf_s(buffer_out, sizeof(buffer_out), "Date:%s%s From:%s%s To:%s%s Subject:%s%s DATA: %s%s%s%s",salida_tiempo,CRLF,input,CRLF, input2, CRLF, input3, CRLF, input5, CRLF, input4, CRLF);
+						sprintf_s(buffer_out, sizeof(buffer_out), "Date:%s%s From:%s%s To:%s%s Subject:%s%s DATA: %s%s%s%s",salida_tiempo,CRLF,input,CRLF, inputDat, CRLF, input3, CRLF, input5, CRLF, input4, CRLF);
 						
 						estado++;
 						printf("SERVIDOR> Datos enviados correctamente\r\n");
@@ -267,6 +273,9 @@ int main(int *argc, char *argv[])
 						} while (caracter!= 's' && caracter!= 'n' && caracter!= 'S' && caracter!='N');
 						//Si es S o s pasamos al estado S_HELO y escribimos otro mensaje
 						if (caracter == 'S' || caracter == 's') {
+							//Necesitamos vaciar la cadena de caracteres inputDat, para que no escriba
+							memset(inputDat, 0, sizeof(inputDat));
+
 							//Escribe en el servidor RSET y pasamos al estado HELO
 							sprintf_s(buffer_out,sizeof(buffer_out),"%s%s", RSET,CRLF);
 							//Enviamos el mensaje mediante el comando send de TCP
@@ -320,12 +329,17 @@ int main(int *argc, char *argv[])
 								//Definimos variable para introducir enteros
 								int estado2=0;
 								do {
-									printf("Introduce 1 --> Introducir los dos usuarios de nuevo\n2--> Para introducir un usuario correcto\n");
+									printf("Introduce 1 --> Introducir los dos usuarios de nuevo, necesidad de reset\n2--> Para introducir un usuario correcto\n");
 									//scanf_s necesita el tipo de dato %i y direccion &.
 									scanf_s("%i", &estado2);
 									switch (estado2) {									
 									case 1:
-										estado = S_MAIL;
+										/* MAL -->  estado = S_MAIL; */
+										printf("Para introducir los dos nuevos usuario necesita confirmar que desea escribir mensaje nuevo.\n");
+										estado = S_RSET;
+										//Si queremos introducir los dos usuarios de nuevo necesitamos borrar el destinatario anterior
+										//Utilizamos memset para borrarlo
+										memset(inputDat, 0, sizeof(inputDat));
 										//Nos permite poder escribir de nuevo en el case S_MAIL
 										gets_s(input, sizeof(input));
 										break;
@@ -334,6 +348,7 @@ int main(int *argc, char *argv[])
 										estado = S_RCPT;
 										//Nos permite poder escribir de nuevo en el case S_MAIL
 										gets_s(input2, sizeof(input2));
+
 										break;
 									default:
 										printf("Opcion no disponible\n");
@@ -345,6 +360,10 @@ int main(int *argc, char *argv[])
 							if(estado==S_DATA){
 								int estado3 = 0;
 								do {
+									//strcat Agrega una copia de la cadena de origen a la cadena de destino
+									//concatenamos input2 con strcat
+									strcat(inputDat, input2);
+									strcat(inputDat, " ");
 									printf("Introduce 1 --> Para introducir otro destinatario.\n2--> No introducir otro destinatario\n");
 									//scanf_s necesita el tipo de dato %i y direccion &.
 									scanf_s("%i", &estado3);
@@ -353,7 +372,6 @@ int main(int *argc, char *argv[])
 										//Vamos a este estado
 										estado = S_RCPT;
 
-										//input2[1024] = input2 + ',';
 										//Necesitamos escribir un get para poder escribir nuevo destinatario
 										gets_s(inputprueba, sizeof(inputprueba));
 
